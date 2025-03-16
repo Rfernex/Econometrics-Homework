@@ -1,0 +1,200 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{bbold}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{hyperref}  % For clickable links in TOC
+\usepackage{tocloft}   % For TOC formatting
+\usepackage{geometry}  % For margins
+\usepackage{titlesec}  % For section formatting
+\usepackage{fancyhdr}
+
+
+% Document styling
+\geometry{margin=1in}
+
+% Customize section formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {}
+  {0pt}
+  {\thesection\quad\rule{\linewidth}{0.4pt}\vspace{0.5em}\newline}
+{\normalfont\Large\bfseries}
+
+
+% adding a header
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Problem Set 1 - Theory}
+\rhead{Romain Fernex}
+\cfoot{ \thepage}
+\renewcommand{\headrulewidth}{0.8pt}
+
+
+\title{PS1 - Econometrics}
+\author{Romain Fernex}
+\date{February 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Part II - Theory}
+
+\subsection{Problem 3}
+To show that the OLS estimator is the same if we remove the constant and center variables, we compute $\hat{\beta_1}$ in both cases (with constant / without constant but with centered variables).
+\subsubsection{With a constant}
+We solve the following optimization problem : 
+\begin{equation}
+    (\hat{\beta_0},\hat{\beta_1}) = arg\min_{\beta_1,\beta_0}\sum_{i=1}^N (y_i-\beta_0-\beta_1x_i)^2
+\end{equation}
+We derive the first order conditions with respect to $\beta_0, \beta_1$ :
+\begin{equation}
+\begin{aligned}
+-2 \sum_{i=1}^N (y_i-\hat{\beta_0}-\hat{\beta_1}x_i)  =& 0 \\
+-2 \sum_{i=1}^N (y_i-\hat{\beta_0}-\hat{\beta_1}x_i)x_i & = 0
+\end{aligned}
+\end{equation}
+After replacing -2 by $\frac{1}{N}$ to substitute sample means, we get this system of normal equations : 
+\begin{equation}
+\begin{aligned}
+\bar{y} = \hat{\beta_0} + \hat{\beta_1}\bar{x} \\
+\bar{xy} = \hat{\beta_0}\bar{x} + \hat{\beta_1}\bar{x^2} 
+\end{aligned}
+\end{equation}
+lets now find $\hat{\beta_1}$ by multiplying the first line in the system (3) by $\bar{x}$ and withdrawing it from the second line to neutralize the term in $\hat{\beta_0}$. 
+We get the following expression of $\hat{\beta_1}$ as a function of sample means : 
+\begin{equation}
+    \hat{\beta_1} = \frac{\bar{xy} - \bar{x}\bar{y}}{\bar{x^2}-\bar{x}^2} 
+\end{equation}
+Based on this new expression, we can expression $\hat{\beta_1}$ as a function of Covariance and variance terms : 
+\begin{equation}
+    \hat{\beta_1} = \frac{Cov(x,y)}{Var(x)}
+\end{equation}
+\subsubsection{Without a constant and with centered variables}
+We now have the following set up : 
+\begin{equation}
+    (\hat{\beta_1}) = arg\min_{\beta_1}\sum_{i=1}^N [(y_i-\bar{y})-\beta_1(x_i-\bar{x})]^2
+\end{equation}
+As in case 1, we obtain the first order condition with respect to $\beta_1$ and replace -2 by $\frac{1}{N}$:
+\begin{equation}
+\begin{aligned}
+    \frac{1}{N} \sum_{i=1}^N [(y_i-\bar{y}) -\hat{\beta_1}(x_i-\bar{x})](x_i-\bar{x}) = 0 \\
+    \Leftrightarrow \frac{1}{N} \sum_{i=1}^N (y_i-\bar{y})(x_i-\bar{x})=\frac{1}{N}\sum_{i=1}^N \hat{\beta_1}(x_i-\bar{x})^2 \\
+    \Leftrightarrow \bar{yx} - \bar{y}\bar{x} = \hat{\beta_1}(\bar{x^2}-\bar{x}^2) \\
+    \Leftrightarrow \hat{\beta_1} = \frac{\bar{yx} - \bar{y}\bar{x}}{\bar{x^2}-\bar{x}^2}
+\end{aligned}
+\end{equation}
+We find the same expression for $\hat{\beta_1}$ as in the first case (with the constant term). We have the same OLS estimator as expected. 
+\subsection{Problem 4}
+\subsubsection{Computing OLS estimators}
+To find the OLS estimator $(\hat{a},\hat{b}, \hat{c})$ we need to solve the following minimization problem  : 
+\begin{equation}
+(\hat{a},\hat{b}, \hat{c}) =  \min_{a,b,c}  \sum_{i=1}^N (y_i - a - bx_i - cz_i )^2 
+\end{equation}
+We begin by obtaining the First order conditions with respect to a, b and c. This gives us : 
+\begin{equation}
+\begin{aligned}
+-2 \sum_{i=1}^N (y_i-\hat{a}-\hat{b}x_i-\hat{c}z_i)  =& 0 \\
+-2 \sum_{i=1}^N (y_i-\hat{a}-\hat{b}x_i-\hat{c}z_i)x_i & = 0\\
+-2 \sum_{i=1}^N (y_i-\hat{a}-\hat{b}x_i-\hat{c}z_i)z_i & = 0
+\end{aligned}
+\end{equation}
+After replacing -2 by $\frac{1}{N}$ and replacing sums by sample means we get the following system of normal equations:  
+\begin{equation}
+\begin{aligned}
+\bar{y} &= \hat{a} + \hat{b}\bar{x} + \hat{c}\bar{z}\\
+\bar{xy} &= \hat{a}\bar{x} + \hat{b}\bar{x^2} + \hat{c}\bar{xz}\\
+\bar{zy} &= \hat{a}\bar{z} + \hat{b}\bar{zx} + \hat{c}\bar{z^2}
+\end{aligned}
+\end{equation}
+Let us rewrite this system by multiplying the first line by $\bar{x}$ ($\bar{z}$) and withdrawing it from the second line (respectively the third line) to get rid of the constant term $\hat{a}$. This yields : 
+\begin{equation}
+\begin{aligned}
+\bar{y} &= \hat{a} + \hat{b}\bar{x} + \hat{c}\bar{z}\\
+\bar{xy} - \bar{x}\bar{y} &= \hat{b}(\bar{x^2} - \bar{x}^2)+ \hat{c}(\bar{xz}-\bar{x}\bar{z})\\
+\bar{zy} - \bar{y}\bar{z} & = \hat{b}(\bar{zx}-\bar{x}\bar{z}) + \hat{c}(\bar{z^2}-\bar{z}^2)
+\end{aligned}
+\end{equation}
+To simplify this expression, we can replace sample means by their equivalents in terms of variance and covariance.\\
+We know that $Cov(x,y) = \bar{xy}-\bar{x}\bar{y}$ (same with $(x,z)$ and $(z,y)$) and that $Var(x)=\bar{x^2}-\bar{x}^2$ (same with $y$ and $z$)\\
+Now we can write : 
+\begin{equation}
+\begin{aligned}
+\hat{a} &=  \hat{b}\bar{x} + \hat{c}\bar{z} - \bar{y}\\
+Cov(x,y) &= \hat{b}*Var(x)+ \hat{c}*Cov(x,z)\\
+Cov(z,y) &= \hat{b}*Cov(z,x) + \hat{c}*Var(z)
+\end{aligned}
+\end{equation}
+The system of equations (12) can be written in matrix form as:
+\begin{equation}
+    \begin{bmatrix}    \text{Var}(x) & \text{Cov}(x, z) \\    \text{Cov}(z, x) & \text{Var}(z)\end{bmatrix}\begin{bmatrix}    \hat{b} \\    \hat{c}\end{bmatrix}=\begin{bmatrix}    \text{Cov}(x, y) \\    \text{Cov}(z, y)\end{bmatrix}.
+\end{equation}
+Let us denote the covariance matrix as:
+\begin{equation}
+    \mathbf{C} =\begin{bmatrix}    \text{Var}(x) & \text{Cov}(x, z) \\    \text{Cov}(z, x) & \text{Var}(z)\end{bmatrix},
+\end{equation}
+and the right-hand side vector as:
+\begin{equation}
+   \mathbf{d} =\begin{bmatrix}    \text{Cov}(x, y) \\    \text{Cov}(z, y)\end{bmatrix}.
+\end{equation}
+The solution for $\hat{b}$ and $\hat{c}$ is given by:\\
+$$\begin{bmatrix}    \hat{b} \\    \hat{c}\end{bmatrix}= \mathbf{C}^{-1} \mathbf{d}.$$
+Now we need to compute the inverse of the covariance matrix to solve for this system (we will posit its existence by assuming that x and z are not perfectly collinear $\Leftrightarrow Var(x)Var(z)\neq Cov(x,z)^2$ ) : \\
+The inverse of a $2 \times 2$ matrix is given by:
+\begin{equation}
+    \mathbf{C}^{-1} = \frac{1}{\det(\mathbf{C})}\begin{bmatrix}    \text{Var}(z) & -\text{Cov}(x, z) \\    -\text{Cov}(z, x) & \text{Var}(x)\end{bmatrix},
+\end{equation}
+where the determinant of $\mathbf{C}$ is:
+\begin{equation}
+\det(\mathbf{C}) = \text{Var}(x) \, \text{Var}(z) - \text{Cov}(x, z)^2.
+\end{equation}
+Substituting this, we have:
+\begin{equation}
+    \mathbf{C}^{-1} =\frac{1}{\text{Var}(x) \, \text{Var}(z) - \text{Cov}(x, z)^2}\begin{bmatrix}    \text{Var}(z) & -\text{Cov}(x, z) \\    -\text{Cov}(z, x) & \text{Var}(x)\end{bmatrix}.
+\end{equation}
+Using $\mathbf{C}^{-1} \mathbf{d}$, we get the following expressions for the OLS estimator $(\hat{a},\hat{b},\hat{c})$ : \\
+\begin{equation}
+\begin{aligned}
+    \hat{a} &= \hat{b} \, \bar{x} + \hat{c} \, \bar{z} - \bar{y} \\
+    \hat{b} &= [C^{-1}d]_{11} = \frac{Cov(x, y) \, Var(z) - Cov(z, y) \, Cov(x, z)}{Var(x) \, Var(z) - Cov(x, z)^2} \\
+    \hat{c} &= [C^{-1}d]_{21} = \frac{Cov(z, y) \, Var(x) - Cov(x, y) \, Cov(x, z)}{Var(x) \, Var(z) - Cov(x, z)^2}
+\end{aligned}
+\end{equation}
+\subsubsection{Constructing the new sample}
+We wish to construct a sample such that : 
+\begin{equation}
+    Cov_N(x_i,z_i) = \sum_{i=1}^N(x_i-\bar{x})(z_i-\bar{z}) = 0
+\end{equation}
+Given that $Corr(x,z)=\frac{Cov(x,z)}{Var(x)Var(z)}$, this implies that we need the two regressors $x, z$ to be uncorrelated. This means that they should not be linearly related to one another.
+\subsubsection{Calculating the estimators given the new sample}
+We take the results we obtained in (19) and substitute $Cov(x,z)$ by 0. We get the following expression for OLS estimators : 
+\begin{equation}
+\begin{aligned}
+  \hat{b} & = \frac{Cov(x,y)}{Var(x)}\\
+  \hat{c} & = \frac{Cov(y,z)}{Var(z)}
+\end{aligned}
+\end{equation}
+The estimators for b and c are now independent from each other, as their expression no longer needs to account for a correlation between $x$ and $z$.
+\subsubsection{Estimating b and c using two simple regressions}
+If x and z are uncorrelated, as posited in (1.2.2), we may run two separate simple regressions to estimate the effect of each regressor on y. This is possible because the effect of one regressor does not influence the effect of the other on the dependent variable. 
+The two regressions to run could be as follows : 
+\begin{equation}
+\begin{aligned}
+  \text{- regression model 1 (to find $\hat{b}$) : } y_i & = a + bx_i + residuals\\
+  \text{- regression model 2 (to find $\hat{b}$) : } y_i & = a + cz_i + residuals
+\end{aligned}
+\end{equation}
+We obtain $\hat{b}$ ($\hat{c}$) by finding the slope coefficient from regression model 1 (respectively, regression model 2).
+Once we have $\hat{b}, \hat{c}$ we can get $\hat{a}$ by using the relation we previously determined in (19) : $\hat{a} =  \hat{b}\bar{x} + \hat{c}\bar{z} - \bar{y}$
+
+\end{document}

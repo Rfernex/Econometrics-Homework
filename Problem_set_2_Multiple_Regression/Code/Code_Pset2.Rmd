@@ -1,0 +1,183 @@
+---
+title: "Problem Set 2"
+author: "Romain Fernex"
+date: "2025-02-14"
+output:
+  pdf_document:
+    number_sections: true
+    latex_engine: xelatex
+    toc: true
+  word_document:
+    toc: true
+  html_document:
+    toc: true
+    df_print: paged
+header-includes: 
+  - \usepackage{titlesec}
+  - \usepackage{fontspec}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+# Problem 1 
+
+
+```{r setup, include=FALSE}
+
+options(repos = c(CRAN = "https://cran.rstudio.com/")) # necessary to load the stargazer package
+knitr::opts_chunk$set(comment = "") # improves output visuals by removing ##
+# knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80), tidy=TRUE)
+
+if (!require(formatR))install.packages("formatR", repos="https://cran.rstudio.com/", dependencies = FALSE)
+if (!require(haven)) install.packages("haven")
+if (!require(dplyr)) install.packages("dplyr")
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(labelled)) install.packages("labelled")
+if (!require(tidyr)) install.packages("tidyr")
+if (!require(ggplot2)) install.packages("ggplot2")
+if (!require(skimr)) install.packages("skimr")
+if (!require(knitr)) install.packages("knitr")
+if (!require(stargazer)) install.packages("stargazer")
+if (!require(KableExtra)) install.packages("KableExtra")
+if (!require(rmarkdown)) install.packages("rmarkdown")
+library(formatR)
+library(kableExtra)
+library(haven)
+library(tidyverse)
+library(labelled)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(knitr)
+library(stargazer)
+```
+
+## Load the data
+```{r, include=TRUE}
+load("/Users/rfernex/Documents/Education/SciencesPo/Courses/S2/Econometrics/TD/Psets/Pset2/Data/401k.Rdata")
+```
+
+## Question 1 
+```{r, include=TRUE}
+mean_participation <- mean(data$prate)
+mean_match <- mean(data$mrate)
+cat("average participation rate :", mean_participation)
+cat("average match rate :", mean_match)
+```
+
+## Question 2 
+```{r, include=TRUE}
+model <- lm(prate ~ mrate, data = data)
+
+stargazer(model, type = "text",
+          title = "Regression Summary: prate vs mrate",
+          dep.var.labels = "Participation rate",
+          covariate.labels = c("Match rate", "Intercept"),
+          omit.stat = c("f"))
+
+num_obs <- nobs(model)
+r_squared <- summary(model)$r.squared
+
+cat("Sample Size :", num_obs)
+cat("R-squared :", sprintf("%.2f%%", r_squared*100))
+```
+
+## Question 3 
+```{r, include=TRUE}
+data$fitted_values <- fitted(model)
+sum_of_residuals <- sum(residuals(model))
+cat("Sum of Residuals:", sprintf("%.2f", sum_of_residuals), "\
+")
+kable(head(data$fitted_values, 10), col.names = c("Fitted Values"))
+```
+
+
+## Question 4 
+```{r, include=TRUE}
+intercept <- coef(model)["(Intercept)"]
+coefficient_mrate <- coef(model)["mrate"]
+
+cat("Intercept :", sprintf("%.2f", intercept), "\
+")
+cat("Coefficient for the match rate :", sprintf("%.2f", coefficient_mrate), "\
+")
+```
+Based on the coefficient for the match rate, increasing the match rate by 1 percent raises the participation rate by 5.86 percent. 
+The intercept is at 83.08%, this means that the predicted participation rate will always be superior or equal to 83%. This seems to indicate that participation rate of eligible workers tends to be pretty high regardless of their company's generosity. 
+ 
+## Question 5 
+```{r, include=TRUE}
+source_mrate = 3.5 # adaptable
+predicted_y <- intercept + coefficient_mrate * source_mrate
+cat("Predicted participation rate for a match rate of", source_mrate, ":", predicted_y)
+```
+The predicted participation rate stands above a hundred which is unreasonable. 
+\textbf{potential issues}
+\begin{itemize}
+\item The value used is outside the fitted data range which may lead to unreasonable predictions
+\item It could also be possible that the relation between the regressor and the dependent variable is in fact not linear. (misspecification) 
+
+\end{itemize} 
+## Question 6
+```{r, include=TRUE}
+cat("The match rate explains", sprintf("%.2f", r_squared*100),"% of the variation in participation rate")
+```
+This seems like a rather small number given the fact the the match rate indicates how much the firm is willing to contribute to the pension plan. This means more than 90% of the variation in prate is attributable to other factors. 
+Nonetheless, it does not mean that the match rate is not significantly related to the participation rate. 
+
+## Question 7 
+```{r, include=TRUE}
+ggplot(data, aes(x = mrate, y = prate)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  labs(
+    title = "Scatter of prate as a function of mrate",
+    x = "Match Rate (mrate)",
+    y = "Participation Rate (prate)"
+  ) +
+  theme_minimal()
+```
+The Scatter plot seems to suggest a positive, non-linear relation between the participation rate and the match rate; 
+
+```{r, include=TRUE}
+# Creates column with binned values
+data <- data %>% mutate(rnd_mrate = round(mrate, digits = 1),
+                        mrate_binned = cut(rnd_mrate, 
+                                           breaks = seq(min(rnd_mrate, na.rm = TRUE), 
+                                                        max(rnd_mrate, na.rm = TRUE), 
+                                                        by = 0.1), 
+                                           include.lowest = TRUE))
+
+# Calculate the average prate by bin
+Average_mrate_df <- data %>% 
+  group_by(mrate_binned) %>% 
+  summarise(avg_prate_by_bin = mean(prate, na.rm = TRUE))
+
+# Add predicted values to the dataset
+data <- data %>% mutate(predicted_values = predict(model))
+
+# Calculate the average predicted prate by bin
+Predicted_mrate_df <- data %>% 
+  group_by(mrate_binned) %>% 
+  summarise(predicted_prate_by_bin = mean(predicted_values, na.rm = TRUE))
+
+# Merge the two dataframes for plotting
+plot_data <- Average_mrate_df %>%
+  left_join(Predicted_mrate_df, by = "mrate_binned")
+
+# Create the scatterplot with average prate and predicted prate
+ggplot() +
+  # Scatterplot for average prate
+  geom_point(data = Average_mrate_df, aes(x = as.numeric(mrate_binned), y = avg_prate_by_bin), color = "blue") +
+  # Line for predicted prate
+  geom_line(data = Predicted_mrate_df, aes(x = as.numeric(mrate_binned), y = predicted_prate_by_bin), color = "red") +
+  theme_minimal() +
+  labs(title = "Scatter plot of average participation rate and predicted participation rate by match rate",
+       x = "Match rate (binned)",
+       y = "Participation rate") +
+  scale_x_continuous(breaks = seq(0, max(as.numeric(Average_mrate_df$mrate_binned), na.rm = TRUE), by = 5)) +
+  theme(panel.grid.major = element_line(color = "gray", linewidth = 0.5),
+        panel.grid.minor = element_blank())
+```
+We notice clearly the positive relation between match rate and participation rate. However, based on the scatterplot, this relation is not linear and there remains a few outliers. 
+Thus we can establish that the problem that our model suffers from is a  misspecification problem. 

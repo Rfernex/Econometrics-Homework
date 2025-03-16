@@ -1,0 +1,141 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{bbold}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{hyperref}  % For clickable links in TOC
+\usepackage{tocloft}   % For TOC formatting
+\usepackage{geometry}  % For margins
+\usepackage{titlesec}  % For section formatting
+\usepackage{fancyhdr}
+\usepackage{footmisc}
+\usepackage[stable]{footmisc}
+
+\newcommand{\ind}{\perp\!\!\!\!\perp} 
+% Document styling
+\geometry{margin=1in}
+
+% Customize section formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {}
+  {0pt}
+  {\thesection\quad\rule{\linewidth}{0.4pt}\vspace{0.5em}\newline}
+{\normalfont\Large\bfseries}
+
+
+% adding a header
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Problem Set 3 - Theory}
+\rhead{Romain Fernex}
+\cfoot{ \thepage}
+\renewcommand{\headrulewidth}{0.8pt}
+
+
+\title{PS3 - Theory}
+\author{Romain Fernex}
+\date{February 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Part II - Theory}
+
+\subsection{Problem 2}
+
+\subsubsection{Question 1 : By what percent is salary predicted to increase, if ros increases by 50 points ?}
+
+The CEO's salary is predicted to increase by 0.00024*50 $\approx$ 1.2\% if ros increases by 50 percentage points
+
+
+\subsubsection{Question 2 : By what percent is salary predicted to increase if sales increase by 1 percent ?}
+The CEO's salary is predicted to increase by 0.28\% if sales increase by 1 percent. 
+\begin{itemize}
+    \item This interpretation is only valid because the log function is applied to both the dependent and the independent variable. 
+\end{itemize}
+
+\subsubsection{Question 3 : Test the null hypothesis that ros has no effect on salary, against the alternative that ros has a positive effect. The critical value at the 10 percent significance level is 1.282.}
+\textbf{Set up of the test : }one-sided test 
+\begin{equation}
+\begin{aligned}
+    H_0 : \beta_3 = 0\\
+    H_1 : \beta_3 >0
+\end{aligned}
+\end{equation}
+Let's note W the test statistic. We reject $H_0$ only if W is superior to the critical value at the 10\% significance level.\\ 
+\textbf{Value of the test statistic : } we note $\hat{T}$ the estimator for the parameter we wish to estimate (here $\beta_3)$
+\begin{equation}
+    W = \frac{\hat{T}-0}{SE(\hat{T})} = \frac{2.4*10^{-4}}{5.4*10^{-4}} = 0.44
+\end{equation}
+We know the critical value $c_{10\%}$ is equal to 1.282. Thus we find that W < 1.282.
+We cannot reject the null hypothesis at the 10 \% significance level, which means it is unlikely that the ros has an effect on salary. 
+
+\subsubsection{Question 4 : Would you include ros in a final model explaining CEO compensation in terms of firm performance? Explain.}
+I would not include the ROS in the final model as it lacks statistical significance (see question 3) and since dropping it might help simplify the model further.
+That being said, comparing the explanatory power of the model before and after removing this variable (by looking at the adjusted R-squared) would be useful to see if this variable indeed contributed little to it. 
+
+\subsection{Problem 3}
+We know that, for $f(\theta) = \gamma = (b,s)$, we have : 
+\begin{equation}
+    \sqrt{n}(\hat{\gamma}-\gamma) \xrightarrow{d} N(0,\Sigma)
+\end{equation}
+We wish to find an estimator for $\theta$. Let us take the following transformation : $g(\gamma) = (\frac{b}{s},\frac{1}{s})= \theta$
+Using the Delta method, we obtain the following:
+\begin{equation}
+    \sqrt{n}(g(\hat{\gamma})-g(\gamma)) \xrightarrow{d} J(\gamma)N(0,\Sigma) \text{ with }J(\gamma)\text{ the Jacobian matrix}
+\end{equation}
+Let us compute $J(\gamma)$: 
+\begin{equation}
+    J(\gamma) = \begin{pmatrix}
+        \frac{\delta g_1(\gamma)}{\delta b} & \frac{\delta g_1(\gamma)}{\delta s} \\
+        \frac{\delta g_2(\gamma)}{\delta b} & \frac{\delta g_2(\gamma)}{\delta s}
+    \end{pmatrix} = \begin{pmatrix}
+        \frac{1}{s} & -\frac{b}{s^2}\\
+        0 & -\frac{1}{s^2} \end{pmatrix} = \begin{pmatrix}
+            \sigma & -\beta \sigma\\
+            0 & -\sigma^2
+    \end{pmatrix}
+\end{equation}
+Before computing the variance, let us find what $\hat{\theta}$ tends to in probability. Knowing $g(\hat{\gamma}) = \hat{\theta}$ and $g(\gamma) = \theta$, based on equation (4) we have : 
+\begin{equation}
+\begin{aligned}
+    \sqrt{n}(\hat{\theta} - \theta) \xrightarrow{d} N(0,J(\gamma)\Sigma J(\gamma)^T) \\
+    \iff \hat{\theta} \xrightarrow{d} N(\theta, \frac{1}{n}J(\gamma)\Sigma J(\gamma)^T)
+\end{aligned}
+\end{equation}
+We can now express $V(\hat{\theta})$ as a function of $\sigma$ and $\beta$ :
+\begin{equation}
+\begin{aligned}
+    V(\hat{\theta}) &= \frac{1}{n}\begin{pmatrix}
+        \sigma & -\beta\sigma\\
+        0 & -\sigma^2
+    \end{pmatrix} \begin{pmatrix}
+        \sigma_1^2 & w\\
+        w & \sigma_2^2
+    \end{pmatrix} \begin{pmatrix}
+        \sigma & 0\\
+        -\beta\sigma & -\sigma^2
+    \end{pmatrix}\\
+    &= \frac{1}{n}\begin{pmatrix}
+        \sigma^2\sigma_1^2+\beta^2\sigma^2\sigma_2^2 - 2 \beta\sigma^3w & -\beta\sigma^2\sigma_2^2+\sigma^3w\\
+        -\beta\sigma^2\sigma_2^2+\sigma^3w & \sigma^4\sigma_2^2
+    \end{pmatrix}
+\end{aligned}    
+\end{equation}
+
+
+
+
+
+\end{document}

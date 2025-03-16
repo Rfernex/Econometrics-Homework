@@ -1,0 +1,387 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{bbold}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{hyperref}  % For clickable links in TOC
+\usepackage{tocloft}   % For TOC formatting
+\usepackage{geometry}  % For margins
+\usepackage{titlesec}  % For section formatting
+\usepackage{fancyhdr}
+\usepackage{footmisc}
+\usepackage[stable]{footmisc}
+
+\newcommand{\ind}{\perp\!\!\!\!\perp} 
+% Document styling
+\geometry{margin=1in}
+
+% Customize section formatting
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {}
+  {0pt}
+  {\thesection\quad\rule{\linewidth}{0.4pt}\vspace{0.5em}\newline}
+{\normalfont\Large\bfseries}
+
+
+% adding a header
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Problem Set 2 - Theory}
+\rhead{Romain Fernex}
+\cfoot{ \thepage}
+\renewcommand{\headrulewidth}{0.8pt}
+
+
+\title{PS2 - Econometrics}
+\author{Romain Fernex}
+\date{February 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Part II - Theory}
+
+\subsection{Problem 2}
+
+\subsubsection{Question 1 : Write the normal equations for the least-squares problem and the formulas for the OLs estimator $\hat{\beta} = \begin{pmatrix} \hat{a} \\ \hat{b }\end{pmatrix}$}
+We solve the following optimization problem : 
+\begin{equation}
+    (\hat{a},\hat{b}) = argmin_{a,b}\sum_{i=1}^N(y_i-a-bx_i)^2
+\end{equation}
+We obtain the FOC's with respect to a and b : 
+\begin{equation}
+\begin{aligned}
+    -2\sum_{i=1}^N (y_i-\hat{a}-\hat{b}x_i) = 0 \\
+    -2\sum_{i=1}^N (y_i-\hat{a}-\hat{b}x_i)x_i = 0
+\end{aligned}
+\end{equation}
+We replace -2 by $\frac{1}{N}$ to obtain the normal equations as a function of sample means : 
+\begin{equation}
+\begin{aligned}
+    \bar{y} &= \hat{a}-\hat{b}\hat{x} \\
+    \bar{yx} &= \hat{a}\bar{x}-\hat{b}\bar{x^2}
+\end{aligned}
+\end{equation}
+We multiply the first line by $\hat{x}$ and withdraw it from the second one to solve for $\hat{\beta}$
+\begin{equation}
+\begin{aligned}
+    \bar{yx}-\bar{y}\bar{x} &= \hat{b}(\bar{x^2}-\bar{x}^2)\\
+    \leftrightarrow \hat{b} &= \frac{\bar{yx}-\bar{y}\bar{x}}{(\bar{x^2}-\bar{x}^2)}\\
+    &= \frac{Cov(x,y}{V(x)}
+\end{aligned}
+\end{equation}
+Thus we get the following estimators for a and b : 
+\begin{equation}
+\begin{aligned}
+    \hat{a} = \bar{y}-\hat{b}\bar{x}\\
+    \hat{b} = \frac{Cov(x,y}{V(x)}
+\end{aligned}
+\end{equation}
+
+\subsubsection{Question 2.a : What is the system of two equations that $\tilde{\beta}$ solves ?}
+First, let us check for the existence of the inverse of $(Z'X)$ : 
+\begin{itemize}
+    \item We have : $Z'X=\begin{pmatrix} 1 & ...& 1\\ z_1 & ...& z_n\end{pmatrix}\begin{pmatrix} 1 & x_1\\ ... & ...\\ 1 & z_n\end{pmatrix} =N \begin{pmatrix} 1 & \bar{x}\\ \bar{z} & \bar{xz}\end{pmatrix}$
+    \item We compute the determinant for this matrix and check whether it is equal to 0 : $det(Z'X) = N[\bar{xz}-\bar{x}\bar{z}] = NCov(x,z)$
+    \item x and z are correlated so $Cov(x,z)>0$ so $det(Z'X) \neq 0$ and $Z'X$ has an inverse
+\end{itemize}
+Now that we have ensured its existence, we can safely use the formula provided for $\tilde{\beta}$ and find the system of equations solved by $\tilde{b}$ : 
+\begin{equation}
+\begin{aligned}
+    \tilde{\beta} &= (Z'X)^{-1}Z'Y \\
+    Z'X\tilde{\beta} &= Z'Y\,\footnotemark[1]\\
+     \begin{pmatrix} 1 & \bar{x} \\ \bar{z} & \bar{xz}\end{pmatrix} \begin{pmatrix} \tilde{a} \\ \tilde{b}\end{pmatrix} &= \begin{pmatrix} \bar{y} \\ \bar{yz} \end{pmatrix} \\
+    \begin{pmatrix} \tilde{a} + \bar{x}\tilde{b} \\ \bar{z}\tilde{a}+\tilde{b}\bar{xz} \end{pmatrix} &= \begin{pmatrix} \bar{y} \\ \bar{yz} \end{pmatrix}  \\
+\end{aligned}
+\end{equation}
+
+\footnotetext[1]{We use $Y=\begin{pmatrix}y_1\\ \vdots \\y_n\end{pmatrix}$}
+
+
+This gives us the following system of equation : 
+\begin{equation}
+\begin{aligned}
+    \tilde{a} + \bar{x}\tilde{b}  = \bar{y} \\
+    \bar{z}\tilde{a}+\tilde{b}\bar{xz} = \bar{yz}
+\end{aligned}
+\end{equation}
+
+\subsubsection{Question 2.b : Derive the value for $\tilde{b}$}
+We solve for $\tilde{b}$ using equation (7) and get the following result : 
+\begin{equation}
+    \tilde{b}=\frac{\bar{yz}-\bar{y}\bar{z}}{\bar{xz}-\bar{x}\bar{z}} = \frac{Cov(y,z)}{Cov(x,z)}
+\end{equation}
+
+\subsubsection{Question 2.c : Verify that $\tilde{b}$ is an unbiased estimator for b}
+We wish to show that : $E(\tilde{b}) = b$\\
+Let's rewrite the equation we have for $\tilde{\beta}$ : we know that $Y = X\beta + u$
+\begin{equation}
+\begin{aligned}
+    \tilde{\beta} &= (Z'X)^{-1}Z'Y\\
+    &= (Z'X)^{-1}Z'[X\beta+u]
+\end{aligned}
+\end{equation}
+Now we take the expectation of $\tilde{\beta}$ and we will take the second row of this matrix to find the expectation of $\tilde{b}$ : 
+\begin{equation}
+\begin{aligned}
+    E(\tilde{\beta}) &= E((Z'X)^{-1}Z'[X\beta+u])\\
+    &= E[(Z'X)^{-1}Z'X\beta] + E[(Z'X)^{-1}Zu] \\
+    &= E(\beta) + E[(Z'X)^{-1}Zu]\\
+    &= \beta + E[(Z'X)^{-1}Z\underbrace{E(u|X)}_{=0}]\\
+    &= \beta
+\end{aligned}
+\end{equation}
+Thus, by taking the second row of this system we obtain that $E(\tilde{b}) = b$, which implies that $\tilde{b}$ is an unbiased estimator of b
+
+
+\subsubsection{Question 3 : Calculate $V(\hat{b}) $ and $V(\tilde{b})$}
+\textbf{1) Computing $V(\hat{b})$ :}\\
+Let's rewrite the expression we got for $\hat{b}$ in (5) :
+\begin{equation}
+\begin{aligned}
+    \hat{b} &= \frac{Cov(y,z)}{Cov(x,z)}\\
+    &= \frac{\sum_{i=1}^n(x_i-\bar{x})(y_i-\bar{y})}{V(x)}
+\end{aligned}
+\end{equation}
+Besides, we know that : 
+\begin{equation}
+\begin{aligned}
+    y_i = a + bx_i + u_i\\
+    \bar{y} = a + b\bar{x} + \underbrace{\bar{u}}_{=0 }
+\end{aligned}
+\end{equation}
+Let's replace $y_i$ and $\bar{y}$ to express $\hat{b}$ as a function of $x_i$ and $\bar{x}$ : 
+\begin{equation}
+\begin{aligned}
+    \hat{b} &= \frac{\sum_{i=1}^n(x_i-\bar{x})(b(x_i-\bar{x}) + u_u)}{V(x)} \\
+    &= \frac{b\sum_{i=1}^n(x_i-\bar{x})^2 + \sum_{i=1}^n(x_i-\bar{x})u_i}{V(x)}\\
+    &= b + \frac{\sum_{i=1}^n(x_i-\bar{x})u_i}{V(x)}
+\end{aligned}
+\end{equation}
+We can know find the Variance of $\hat{b}$ from this expression
+\begin{equation}
+\begin{aligned}
+    V(\hat{b}) &= \underbrace{V(b)}_{=0}+ \frac{1}{V(x)^2}{\sum_{i=1}^n(x_i-\bar{x})^2\underbrace{V(u_i)}_{=\sigma^2}}\\
+    &=\frac{V(x)\sigma^2}{V(x)^2}\\
+    &=\frac{\sigma^2}{V(x)}
+\end{aligned}
+\end{equation}
+\textbf{2) Computing $V(\tilde{b})$ :}\\
+As we did for $\hat{b}$, we rewrite the expression we got for $\tilde{b}$ in (8) : 
+\begin{equation}
+\begin{aligned}
+    \tilde{b} &= \frac{Cov(y,z)}{Cov(x,z)}\\
+    &= \frac{\sum_{i=1}^n(y_i-\bar{y})(z_i-\bar{z})}{Cov(x,z)}\\
+    &= \frac{\sum_{i=1}^n(b(x_i-\bar{x})+ui)(z_i-\bar{z})}{Cov(x,z)}\\
+    &=\frac{b\sum_{i=1}^n(x_i-\bar{x})(z_i-\bar{z})}{Cov(x,z)} + \frac{\sum_{i=1}^n(z_i-\bar{z})u_i}{Cov(x,z)}\\ 
+\end{aligned}
+\end{equation}
+Now we can find the variance of $\tilde{b}$ :
+\begin{equation}
+\begin{aligned}
+    V(\tilde{b}) &= \frac{\sum(z_i-\bar{z})^2V(u_i)}{Cov(x,z)^2}\\
+    &= \frac{V(z)\sigma^2}{Cov(x,z)^2}
+\end{aligned}
+\end{equation}
+
+\subsubsection{Question 4 : Show that $V(\hat{b}) \leq V(\tilde{b})$}
+We know that $V(\hat{b}) = \frac{\sigma^2}{V(x)}$ and $ V(\tilde{b}) = \frac{V(z)\sigma^2}{Cov(x,z)^2}$,\\
+Cauchy Schwartz gives us the following : 
+\begin{equation}
+\begin{aligned}
+    Cov(x,z)^2 &\leq V(z)V(x) \\
+    \frac{1}{V(x)} &\leq \frac{V(z)}{Cov(x,z)^2}\\
+    \frac{\sigma^2}{V(x)} &\leq \frac{V(z)\sigma^2}{Cov(x,z)^2}\\
+    V(\hat{b}) &\leq V(\tilde{b})
+\end{aligned}
+\end{equation}
+
+\subsection{Problem 3}
+
+\subsubsection{Question 1 : Show that SST = SSR + SSE}
+Let us start from SST to find this equality : 
+\begin{equation}
+\begin{aligned}
+    SST &= \sum_{i=1}^n(y_i-\bar{y})^2\\
+    &= \sum_{i=1}^n (y_i-\hat{y}_i+\hat{y}_i-\bar{y})^2\\
+    &= \sum_{i=1}^n (\hat{u}_i + \hat{y}_i-\bar{y})^2\\
+    &= \underbrace{\sum_{i=1}^n\hat{u}_i^2}_{SSR} + 2\sum_{i=1}^n\hat{u}_i(\hat{y}_i-\bar{u}) + \underbrace{\sum_{i=1}^n(\hat{y}_i - \bar{y)}}_{SSE}\\
+\end{aligned} 
+\end{equation}
+We know that the middle term is equal to 0 since residuals are orthogonal to fitted values \footnote[2]{proof : we know $\sum\hat{u}_i\hat{y}_i = 0$ (predicted values $\ind$ residuals) and $\sum\hat{u}_i =0$ (by construction)}
+Thus we get the desired result : 
+\begin{equation}
+        SST = SSR + SSE
+\end{equation}
+
+\subsubsection{Question 2 : Find $\hat{V}(\hat{\beta}_2)$}
+We know that : $\hat{V}(\hat{\beta})=\sigma^2(X'X)^{-1}[1] $ with $X = \begin{pmatrix} 1 & w_1\\ ... & ...\\ 1 & w_n\end{pmatrix}$
+Let us find the inverse of $(X'X)^{-1}$:
+\begin{itemize}
+    \item we have : $X'X$ = \begin{pmatrix} 1 & ... & 1\\ w_1 & ... & w_n\end{pmatrix}\begin{pmatrix} w_1\\ ... & ...\\ 1 & w_n \end{pmatrix} = $n\begin{pmatrix}
+        1 & \bar{w}\\\bar{w} & \bar{w^2}
+    \end{pmatrix}$
+    \item we compute the determinant : $det(X'X) = n^2(\bar{w^2}-\bar{w}^2) = n^2V(w) > 0 $ (assumed)
+    \item we have the following inverse matrix : $(X'X)^{-1}=\frac{1}{nV(w)}\begin{pmatrix}
+        \bar{w^2} & -\bar{w}\\
+        -\bar{w} & 1
+    \end{pmatrix}$[2]
+\end{itemize}
+Now that we have the inverse matrix, we use [1] and find the Covariance matrix for $\hat{\beta}$ : 
+\begin{equation}
+    V(\hat{\beta}) = \begin{pmatrix}
+        V(\hat{\beta}_1) & Cov(\hat{\beta}_1,\hat{\beta}_2)\\
+        Cov(\hat{\beta}_1,\hat{\beta}_2) & V(\hat{\beta}_2)
+    \end{pmatrix} = \hat{\sigma}^2(X'X)^{-1}
+\end{equation}
+We replace $(X'X)^{-1}$ by what we find in [2] to find $V(\hat{\beta}_2)$ : 
+\begin{equation}
+    V(\hat{\beta}_2) = \frac{\hat{\sigma}^2}{nV(w)}\begin{pmatrix}
+        \bar{w^2} & -\bar{w}\\
+        -\bar{w} & 1
+    \end{pmatrix}_{22}
+\end{equation}
+Therefore : 
+\begin{equation}
+\begin{aligned}
+    V(\hat{\beta}_2) &= \frac{\hat{\sigma}^2}{nV(w)}   \\
+    &= V(\hat{u}_i)\frac{1}{\sum_{i=1}^n(w_i-\bar{w})^2}
+\end{aligned}
+\end{equation}
+We know that : $V(\hat{u}_i) = \frac{SSR}{N-K}$ \footnote[3]{proof : $\hat{\sigma}^2=V(\hat{u}_i) = E(\hat{u}_i^2) - \underbrace{E(\hat{u}_i)^2}_{=0} = \frac{1}{N}\sum \hat{u}_i^2 = \frac{SSR}{n}$\\
+But this estimator is biased as it does not account for the loss in degrees of freedom (K here) so we adjust for that by taking $(n-K)$ instead of $n$ for the denominator. This yields : $\hat{\sigma}^2=\frac{SSR}{n-K}$} 
+so we can replace it in the previous formula : 
+\begin{equation}
+    V(\hat{\beta}_2) = \frac{SSR}{(n-K)\sum(w_i-\bar{w})^2}
+\end{equation}
+
+\subsection{Problem 4}
+\subsubsection{Question 1 : Find $V(\hat{\beta}_1-3\hat{\beta}2)$ ? What is the standard error ? }
+We have : 
+\begin{equation}
+    V(\hat{\beta}_1-3\hat{\beta}2) = V(\hat{\beta}_1) + 9V(\hat{\beta}_2)- 6Cov(\hat{\beta}_1,\hat{\beta}_2)
+\end{equation}
+Now, to find the standard error we compute the standard deviation : 
+\begin{equation}
+    std(\hat{\beta}_1-3\hat{\beta}2) = \sqrt{V(\hat{\beta}_1) + 9V(\hat{\beta}_2)- 6Cov(\hat{\beta}_1,\hat{\beta}_2)}
+\end{equation}
+This gives us the following formula for the standard error :
+\begin{equation}
+\begin{aligned}
+    SE(\hat{\beta}_1 - 3\hat{\beta}_2) &= \frac{1}{\sqrt{n}}\sqrt{V\left(\hat{\beta}_1 - 3\hat{\beta}_2\right)} \\
+    &= \frac{1}{\sqrt{n}}\sqrt{V(\hat{\beta}_1) + 9V(\hat{\beta}_2) - 6Cov(\hat{\beta}_1, \hat{\beta}_2)}
+\end{aligned}
+\end{equation}
+
+\subsubsection{Question 2 : Write the t-statistic for testing $H_0 : \beta_1 -3\beta_2 = 1$ }
+Let's write down the set-up for this test : 
+\begin{equation}
+\begin{aligned}
+    H_0 : \beta_1 -3\beta_2 = 1 \\
+    H_1 : \beta_1 -3\beta_2 \neq 1
+\end{aligned}
+\end{equation}
+We note the t-statistic $W$ and we know that : 
+\begin{equation}
+    W = \frac{\hat{T}-T_0}{SE(\hat{T})} \text{ with $\hat{T}$ the estimator for $\beta_1 -3\beta_2$}
+\end{equation}
+This gives us the following t-statistic : 
+\begin{equation}
+    W = \sqrt{n}\frac{\hat{\beta}_1 - 3\hat{\beta}_2 - 1}{\sqrt{V(\hat{\beta}_1) + 9V(\hat{\beta}_2) - 6Cov(\hat{\beta}_1, \hat{\beta}_2)}}
+\end{equation}
+
+\subsubsection{Question 2 : Write the regression equation with $\theta$ and provide the standard error}
+We define : $\theta = \beta_1 - 3\beta_2 \leftrightarrow \beta_1 = \theta + 3\beta_2$
+So, substituting this back into the model introduced for question 1 we have : 
+\begin{equation}
+\begin{aligned}
+    y_i &= \beta_0 + (\theta + 3\beta_2)x_{1i} + \beta_2x_{2i} + \beta_3x_{3i} + u_i\\
+    &=\beta_0 + \theta x_{1i}+\beta_2(3x_{1i}+x_{2i})+\beta_3x_{3i} + u_i
+\end{aligned}
+\end{equation}
+We set $x_{2i}^*= 3x_{1i}+x_{2i}$ which gives us the following equation : 
+\begin{equation}
+    y_i = \beta_0 + \theta x_{1i} + \beta_2x_{2i}^* + \beta_3x_{3i}+u_i
+\end{equation}
+Now, we know $\hat{\theta}$ is an estimate of $\beta_1-3\beta_2$ by definition so we can find its variance and standard error using equation (26) :
+\begin{equation}
+\begin{aligned}
+    V(\hat{\theta}) &= V(\hat{\beta}_1) + 9V(\hat{\beta}_2)- 6Cov(\hat{\beta}_1,\hat{\beta}_2)\\
+    SE(\hat{\theta}) &= \frac{1}{\sqrt{n}}\sqrt{V(\hat{\beta}_1) + 9V(\hat{\beta}_2) - 6Cov(\hat{\beta}_1, \hat{\beta}_2)}
+\end{aligned}
+\end{equation}
+
+\subsection{Problem 5}
+
+\subsubsection{Question 1 : is either educ or age individually significant at the 5\% level ?}
+We write the set up for the two-sided test for education :
+\begin{equation}
+\begin{aligned}
+    H_0 : \beta_2 &= 0 \text{ (education has no impact on sleep} \\
+    H_1 : \beta_2 &\neq 0
+\end{aligned}
+\end{equation}
+We compute the test statistic so we can evaluate the significance of education at the 5\% significance level :
+\begin{equation}
+    W = \frac{\hat{\beta}_2-\beta_2}{SE(\hat{\beta}_2)} = \frac{-11.13}{5.88} \approx -1.893
+\end{equation}
+The critical value for a two-sided test at the 5\% significance level is $\pm 1.96$ \footnote[4]{We use the normal distribution since the sample size is big enough (706) to make this approximation}
+We compare this critical value to the test stastistic and notice that $-1.893 > -1.96$ which implies that education does not impact sleep significantly !
+We proceed in a similar way for age : 
+\begin{itemize}
+    \item The critical value is : $W_2 = \frac{2.20}{1.45} \approx 1.517$
+    \item Since $1.517 < 1.96$ we can conclude that age is not individually significant at the 5\% level either. 
+\end{itemize}
+
+\subsubsection{Question 2 : Are educ and age jointly significant in the orignal equation ?}
+To test for joint significance, we need to use a Fisher test which compare the restricted model (without educ and age) with the unrestricted one : (we note ur for unrestricted and r for restricted)
+\begin{equation}
+    F = \frac{(R^2_{ur}-R^2_r)/q}{(1-R^2_{ur})/(N-k-1)} 
+\end{equation}
+with k the number of parameters in the unrestricted model and q the number of variable we removed from the equation. 
+We can now compute it using the values given in the exercises : 
+\begin{equation}
+    F = \frac{(0.113-0.103)/2}{(1-0.113)/(706-3-1)} \approx 3.96
+\end{equation}
+Now, we need to find the critical value to compare it to the F statistic : 
+\begin{itemize}
+    \item the number of degrees of freedom of the numerator is 2 (educ and age) and corresponds to the number of variables removed
+    \item the number of degrees of freedom of the denominator is $N-k-1 = 706 - 3 - 1 = 702$ by definition
+    \item thus we need to find the critical F-value at the 5\% level of significance with (2,702) degrees of freedom.
+\end{itemize}
+We find that the critical value is $\approx 3.01$ which is inferior to 3.96 .
+Thus, we can safely the null hypothesis , implying that educ and age are  jointly significant at the 5\% significance level !
+
+
+\subsubsection{Question 3 : Does including educ and age in the model greatly affect the estimated tradeoff between sleeping and working?}
+The impact of removing educ and age on the regression coefficient for work has been very limited with only a 0.003 change. 
+Besides, work is significant in both model as can be shown by computing the t-statistic in both cases : 
+\begin{equation}
+\begin{aligned}
+    W_1 = \frac{0.148}{0.017} \approx 8.7 >> 1.96\\
+    W_2 = \frac{0.151}{0.017} \approx 8.88 >> 1.96 
+\end{aligned}
+\end{equation}
+Lastly, when looking at the R-squared, removing these two variables did not have a significant impact on the explanation power of the model either. 
+
+
+\begin{equation}
+\begin{aligned}
+    (Z'X)^2 \leq (Z'Z)(X'X)\\
+    (Z'X)^2(X'X)^{-1} \leq (Z'Z)
+\end{aligned}
+\end{equation}
+
+
+\end{document}

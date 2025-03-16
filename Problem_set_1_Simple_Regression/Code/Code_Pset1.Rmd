@@ -1,0 +1,385 @@
+---
+title: '\textbf{\Huge Problem Set 1 : Empirical}'
+author: "Romain Fernex"
+date: "2025-02-08"
+output:
+  pdf_document:
+    number_sections: true
+    latex_engine: xelatex
+    toc: true
+  word_document:
+    toc: true
+  header-includes: \usepackage{titlesec}
+  html_document:
+    toc: true
+    df_print: paged
+---
+
+# **Problem 1 :**
+
+```{r setup, include=FALSE}
+
+options(repos = c(CRAN = "https://cran.rstudio.com/")) # necessary to load the stargazer package
+knitr::opts_chunk$set(comment = "") # improves output visuals by removing ##
+
+# Loading necessary packages 
+if (!require(haven)) install.packages("haven")
+if (!require(dplyr)) install.packages("dplyr")
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(labelled)) install.packages("labelled")
+if (!require(tidyr)) install.packages("tidyr")
+if (!require(ggplot2)) install.packages("ggplot2")
+if (!require(skimr)) install.packages("skimr")
+if (!require(knitr)) install.packages("knitr")
+if (!require(stargazer)) install.packages("stargazer")
+if (!require(stargazer)) install.packages("KableExtra")
+library(kableExtra)
+library(haven)
+library(tidyverse)
+library(labelled)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(knitr)
+library(stargazer)
+```
+
+## **Loading the data**
+```{r, include=TRUE}
+root_dir =  "/Users/rfernex/Documents/Education/SciencesPo/Courses"
+Sub_dir = "/S2/Econometrics/TD/Psets/Pset1/Data/ee2002ext.dta"
+fullpath = paste0(root_dir,Sub_dir)
+employment_data = read_dta(fullpath)
+```
+
+## **Question 1 : Summarize the dataset.**
+```{r, include=TRUE}
+summary <- skim(employment_data)
+summary
+```
+
+## **Question 2 : Summarize variable salfr (monthly earnings) using the option "detail".**
+```{r, include=TRUE}
+summary_salfr <- skim(employment_data$salfr)
+summary_salfr
+```
+
+## **Question 3 : Tabulate the education variable ddipl1.** 
+```{r, include=TRUE}
+table_ddipl1 <- table(employment_data$ddipl1)
+knitr::kable(table_ddipl1, caption = "Tabulation of Education Variable (ddipl1)")
+```
+
+## **Question 4 : Use the command "label" to associate a label to variable ddipl1.**
+```{r, include=TRUE}
+var_label(employment_data$ddipl1) <- "Highest Level of Education Attained"
+```
+Adds the label "Highest Level of Education Attained" to the variable titled "ddipl1". 
+
+## **Question 5 :  Use the command "tabulate" to calculate mean wage by education. Do the same using "by var1: sum var2". Comment on the differences.**
+```{r, include=TRUE}
+# method 1 : using the R built-in function 
+mean_wage_by_education <- employment_data %>% 
+  filter(!is.na(ddipl1) & !is.na(salfr)) %>%
+  group_by(ddipl1) %>%
+  summarise(mean_income = mean(salfr))
+
+# method 2 : using a hand-made mean function
+average <- function(x) {
+  mean = sum(x)/length(x)
+  return(mean)
+}
+
+mean_wage_by_education_manual <- employment_data %>%
+  filter(!is.na(ddipl1) & !is.na(salfr)) %>%
+  group_by(ddipl1) %>%
+  summarise(mean_income = average(salfr))
+
+knitr::kable(mean_wage_by_education, caption = "Mean Wage by Education (Built-in Function)
+             ")
+knitr::kable(mean_wage_by_education_manual, caption = "Mean Wage by Education (Manual Function)
+             ")
+```
+We find the same result independently of whether we use the built in function or create the function by ourself.
+
+## **Question 6 : Tabulate adfe and ddipl1 as a two-entry table. How would you interpret adfe=0 and adfe=99**
+```{r, results = 'hold'}
+two_way_table <- employment_data %>%
+  filter(!is.na(adfe) & !is.na(ddipl1)) %>%
+  group_by(adfe, ddipl1) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  pivot_wider(names_from = adfe, 
+              values_from = count,
+              values_fill = list(count = 0))
+
+#splits the two-way table in half for improved legibility upon render
+n <- ncol(two_way_table)
+first_half <- two_way_table[, 1:17]
+second_half <- two_way_table[, c(1,18:n)]
+
+# Display the two parts as separate tables
+kable(first_half, caption = "Two-Way Table of adfe with ddipl1") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center")
+
+kable(second_half) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center")
+```
+The variable adfe corresponds, broadly, to the age at which the respondent completed his studies. adfe = 0 and adfe = 99 are both special cases : 
+\begin{itemize}
+  \item respondents for which adfe = 0 are respondent who never studied and thus the age at which he/she completed his study is assumed to be zero.
+  \item respondents for which adfe = 99 are respondent who have yet to complete their studies. In other words, they were still students at the time this survey was made.
+\end{itemize}
+
+## **Question 7 : Calculate the mean of adfe by ddipl1.**
+```{r, include=TRUE}
+mean_adfe_by_ddipl1 <- employment_data %>%
+  filter(!is.na(ddipl1) & !is.na(adfe)) %>%
+  group_by(ddipl1) %>%
+  summarise(mean_income = mean(adfe))
+
+knitr::kable(mean_adfe_by_ddipl1, caption = "Mean of adfe by ddipl1")
+```
+
+## **Question 8 : Produce a scatterplot of salfr and adfe for adfe different from 0 and 99.**
+```{r, include=TRUE}
+employment_data %>%
+  filter(adfe != "0" & adfe != "99") %>%  # Filter out 0 and 99
+  ggplot(aes(x = adfe, y = salfr)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Scatter plot of salary by employment status",
+       x = "Last year of study  (adfe)",
+       y = "Monthly wage (salfr)")
+```
+
+## **Question 9 : Generate a variable lw that is the log of salfr.**
+```{r, include=TRUE}
+# Exclude values of 'salfr' that are equal to 0 to avoid having -infinite values  in log wages
+employment_data$lw <- ifelse(employment_data$salfr!=0, log(employment_data$salfr), NA)
+
+# Remove rows where 'lw' is NA
+employment_data <- employment_data[!is.na(employment_data$lw), ]
+```
+
+## **Question 10 : Produce a scatterplot of lw and adfe for adfe different from 0 and 99. Does that suggest to you that some additional trimming would be useful to introduce?**
+```{r, include=TRUE}
+employment_data %>%
+  filter(adfe != "0" & adfe != "99") %>%  # Filter out 0 and 99
+  ggplot(aes(x = adfe, y = lw)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Scatter plot of salary by employment status",
+       x = "Last year of study  (adfe)",
+       y = "Log of Monthly wage (lw)")
+```
+As R does not exclude them automatically, unlike stata, we also filter away the  log of null salaries which result in -$\infty$ and bias the data. 
+Based on this new graph, we can see that the relation between the log of wage    and the end-of-study age is not linear. It also appears that there remains some extreme values with a decent share of wages that lie around 1.
+
+## **Question 11 : Calculate the 1st and the 99th percentiles of lw using command "summarize".**
+```{r, include=TRUE}
+percentiles_lw <- employment_data %>%
+  summarise(
+    q01 = quantile(lw, probs = 0.01, na.rm = TRUE),
+    q99 = quantile(lw, probs = 0.99, na.rm = TRUE)
+  )
+
+knitr::kable(percentiles_lw, caption = "1st and 99th Percentiles of lw")
+```
+
+## Question 12 : Use "_pctile lw, p(0.5, 99.95)" and "return list" to calculate the 0.5 and 99.5 percentiles (say p0050 and p9995). Explain what they mean.
+```{r, include=TRUE}
+percentiles_lw_extreme <- employment_data %>%
+  summarise(
+    q0050 = quantile(lw, probs = 0.005, na.rm = TRUE),
+    q9995 = quantile(lw, probs = 0.995, na.rm = TRUE)
+  )
+
+knitr::kable(percentiles_lw_extreme, caption = "0.5 and 99.5 Percentiles of lw")
+```
+Based on observed values we can say the following : \begin{itemize}
+  \item from q0050 : Exactly 0.5\% of monthly log wages observed are inferior or equal to ~6.4
+  \item from q9995 : Exactly 99.5\% of monthly log wages observed are inferior or equal to ~10.6
+\end{itemize}
+## **Question 13 : How would you use command "global" to store these values.**
+```{r, include=TRUE}
+p0050 <- quantile(employment_data$lw, probs = 0.005, na.rm = TRUE)
+p9995 <- quantile(employment_data$lw, probs = 0.995, na.rm = TRUE)
+```
+As R does not really have a stricto sensu equivalent of the Stata "global" command, I store individually the value of each of the computed quartiles in the R environment.
+
+## **Question 14 : Calculate the variances of lw and adfe and the covariance between lw and adfe for 0 < adfe < 99 and p0050 < lw < p9995 using command "correlate".**
+```{r, include=TRUE}
+# Computes the variance of log wages
+variance_lw <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw > p0050 & lw < p9995) %>%
+  pull(lw) %>%
+  var(na.rm = TRUE)
+cat("Variance of wages : ", variance_lw, "\n")
+
+# Computes the variance of end-of-study age
+variance_adfe <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw>p0050 & lw<p9995 ) %>%
+  pull(adfe) %>%
+  var(na.rm = TRUE)
+cat("Variance of end-of-study age : ", variance_adfe, "\n")
+
+# Computes the covariance between lw and adfe
+covariance_lw_adfe <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw > p0050 & lw < p9995) %>%
+  with(cov(lw, adfe, use = "complete.obs"))
+cat("Covariance between log-wage and end-of-study year : ", covariance_lw_adfe, "\n")
+```
+
+## **Question 15 : Calculate the total sum of squares (SST) for lw.**
+```{r, include=TRUE}
+SST <- employment_data %>%
+  with(sum((lw - mean(lw, na.rm = TRUE))^2, na.rm = TRUE))
+cat("SST : ", SST, "\n")
+```
+
+## **Question 16 : Deduce the OLS estimator of the regression of lw on adfe.**
+```{r, include=TRUE}
+beta = covariance_lw_adfe / variance_adfe
+cat("OLS estimator β : ", beta, "\n")
+```
+
+## **Question 17 : Regress lw on adfe without selection and repeat the exercise with the selection. Briefly discuss the effect of the trimming.**
+```{r, include=TRUE}
+reg_not_trimmed <- employment_data %>%
+  lm(lw ~ adfe, data = .)
+
+# Create the trimmed regression model
+reg_trimmed <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw > p0050 & lw < p9995) %>%
+  lm(lw ~ adfe, data = .)
+
+# Use stargazer to display the regression results
+library(stargazer)
+stargazer(reg_not_trimmed, reg_trimmed, type = "text",
+          title = "Regression Results",
+          column.labels = c("Untrimmed", "Trimmed"),
+          dep.var.labels = "Log of Monthly Wage (lw)",
+          covariate.labels = "Age at End of Study (adfe)",
+          omit.stat = c("f"))
+```
+The R-squared coefficient goes down a little as we reduce the number of observations. Besides the estimate of the impact of the age of the last year of study (adfe) on monthly wages is more pronounced in the trimmed model and has the opposite sign.
+The untrimmed model indicates that an increase in adfe incurs a decrease in wage. Conversely, The trimmed model indicates an increase in wage with a one year increase in adfe.
+This is due to the removal of outliers for both the regressor and the dependent variable.
+
+## **Question 18 (a,b,c) : regression with the trimming**
+### 18.a
+```{r, include=TRUE}
+beta_coeff <- coef(reg_trimmed)["adfe"]
+percentage_increase <- (exp(beta_coeff) - 1) * 100 
+cat("Increasing the last year of education by 1 yields a", sprintf("%.2f%%", percentage_increase), "increase in wage.\n")
+```
+
+
+### 18.b
+```{r, include=TRUE}
+#creates the regression model
+model <- lm(lw ~ adfe, 
+            data = employment_data %>% 
+              filter(adfe > 0 & adfe < 99 & lw > p0050 & lw < p9995))
+
+#sum of squared residuals
+SSR2 <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw > p0050 & lw < p9995) %>%
+  with(sum((lw - predict(model))^2, na.rm = TRUE))
+
+#sum of squares total
+SST2 <- employment_data %>%
+  filter(adfe > 0 & adfe < 99 & lw>p0050 & lw<p9995) %>%
+  with(sum((lw - mean(lw, na.rm = TRUE))^2, na.rm = TRUE))
+
+# sum of squares explained 
+SSE2 <- SST2 - SSR2 
+
+
+
+cat("SSE : ", SSE2, "\n")
+cat("SSR : ", SSR2, "\n") 
+cat("SST : ", SST2, "\n")
+```
+
+### 18.c
+```{r, include=TRUE}
+R_squared <- SSE2/SST2
+cat("R-squared : ", R_squared, "\n")
+```
+
+
+## **Question 19 : Calculate predicted values and residuals using command predict. Show that the these two variables are uncorrelated.**
+```{r, include=TRUE}
+predicted_values <- predict(model)
+residuals <- residuals(model)
+correlation <- cor(predicted_values, residuals, use = "complete.obs")
+cat("The correlation coefficient is :", correlation, "\n")
+```
+The correlation coefficient strongly tends towards zero which shows that these two variable are indeed not correlated.
+
+## **Question 20 :**
+```{r, include=TRUE}
+histogram = hist(residuals, 
+     freq = FALSE,
+     breaks = 50,
+     col = "grey", 
+     main = "Histogram of Residuals",
+     xlab = "Residuals",
+     ylab = "Density",
+     border = "black")
+
+# Add a normal distribution curve with adjusted range
+curve(dnorm(x, mean = mean(residuals), sd = sd(residuals)), 
+      from = min(residuals), to = max(residuals), 
+      add = TRUE, col = "blue", lwd = 2)
+
+# Add a legend for clarity
+legend("topright", legend = c("Normal Curve"), 
+       col = c("blue"), lwd = 2)
+```
+
+
+# **Problem 2 :**
+
+## **Question 1 : Please discuss the direction of the relationship. Does the intercept have a useful inter- pretation here? Explain. How much higher is the GPA predicted to be if the ACT score is increased by five points?**
+```{r, include=TRUE}
+data_students <- tibble(
+  ACT = c(21, 24, 26, 27, 29, 25, 25, 30),
+  GPA = c(2.8, 3.4, 3.0, 3.5, 3.6, 3.0, 2.7, 3.7)
+)
+
+model <- lm(GPA ~ ACT, 
+            data = data_students)
+
+stargazer(model, type = "text",
+          title = "Regression Summary: GPA vs ACT",
+          dep.var.labels = "GPA",
+          covariate.labels = "ACT Scores",
+          omit.stat = c("f"))
+```
+If the ACT score is increased by 5 the predicted GPA is higher by 5*0.1022. The intercept tells us the value of the predicted GPA when the ACT score is equal to 0, thus we know predicted GPA will never go below 0.56.
+
+## **Question 2 : Compute the fitted values and residuals for each observation, and verify that the residuals sum to zero (approximately).**
+```{r, include=TRUE}
+residuals <- residuals(model)
+fitted_values <- fitted(model)
+cat("The sum of residuals is : ", sum(residuals), "\n")
+```
+
+## **Question 3 : What is the predicted value for GPA when ACT = 20?**
+```{r, include=TRUE}
+predicted_gpa <- predict(model, newdata = data.frame(ACT = 20))
+cat("The predicted GPA is :", predicted_gpa, "\n")
+```
+
+## **Question 4 : For the eight students whose data are provided above, how much of the variation in GPA is explained by ACT? Explain.**
+Based on the R-squared coefficient obtained with the regression, about 58% of the GPA is explained by ACT scores.
+
+
+
+
+
