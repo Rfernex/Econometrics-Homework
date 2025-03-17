@@ -1,0 +1,322 @@
+---
+title: "Pset 3 - Empirical"
+author: "Romain Fernex"
+date: "2025-02-24"
+output:
+  pdf_document:
+    number_sections: true
+    latex_engine: xelatex
+    toc: true
+  word_document:
+    toc: true
+  html_document:
+    toc: true
+    df_print: paged
+header-includes: 
+  - \usepackage{titlesec}
+  - \usepackage{amsmath}
+  - \usepackage{fontspec}
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+---
+
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cran.rstudio.com/")) # necessary to load the stargazer package
+knitr::opts_chunk$set(comment = "") # improves output visuals by removing ##
+
+if (!require(haven)) install.packages("haven")
+if (!require(dplyr)) install.packages("dplyr")
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(labelled)) install.packages("labelled")
+if (!require(tidyr)) install.packages("tidyr")
+if (!require(ggplot2)) install.packages("ggplot2")
+if (!require(skimr)) install.packages("skimr")
+if (!require(knitr)) install.packages("knitr")
+if (!require(stargazer)) install.packages("stargazer")
+if (!require(stargazer)) install.packages("KableExtra")
+if (!require(car)) install.packages("car")
+if (!require(broom)) install.packages("broom")
+library(kableExtra)
+library(haven)
+library(broom)
+library(tidyverse)
+library(labelled)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(skimr)
+library(knitr)
+library(stargazer)
+library(car)
+
+```
+
+# Load Data 
+```{r, include = TRUE}
+root_dir =  "/Users/rfernex/Documents/Education/SciencesPo/Courses"
+Sub_dir = "/S2/Econometrics/TD/Psets/Pset1/Data/ee2002ext.dta"
+fullpath = paste0(root_dir,Sub_dir)
+employment_data = read_dta(fullpath)
+```
+
+# Question 2 & 3
+```{r, include = TRUE}
+# Creates the new variables and filters out excluded values
+employment_data <- employment_data %>% na.omit() %>%
+  select(salfr, ddipl1, s, agd) %>%
+  mutate(log_salfr = log(salfr),
+         agd_sqd = agd^2) %>%
+  filter(log_salfr > quantile(log_salfr, probs = 0.005), 
+         log_salfr < quantile(log_salfr, probs = 0.995), 
+         ddipl1!= 7)
+```
+
+# Question 4 
+```{r, include = TRUE}
+# turns the education and sex variables into categorical variables
+employment_data$ddipl1 <- as.factor(employment_data$ddipl1)
+employment_data$s <- as.factor(employment_data$s)
+
+# runs model
+model <- lm(log_salfr ~ s + agd + agd_sqd + ddipl1, data = employment_data)
+
+stargazer(model, type = "text", title = "Regression Results", 
+          dep.var.labels = "Log(salfr)", 
+          omit.stat = c("f", "ser"))
+
+original_coef <- coef(model)
+original_coef_no_intercept <- original_coef[names(original_coef) != "(Intercept)"]
+
+transformed_coef <- (exp(original_coef_no_intercept) - 1) * 100
+
+coef_matrix <- rbind(Original = original_coef_no_intercept,
+                     `(Exp(Coef)-1)100` = transformed_coef)
+coef_matrix_rounded <- round(coef_matrix, 4)
+
+kable(coef_matrix_rounded, caption = "Table with transformed coefficients (Intercept excluded)")
+```
+
+# Question 5
+\textbf{General observations}
+\begin{itemize}
+\item Based on p-values, all independent variables are significant at the 1% significance level.
+\item For instance, having the BEPC (ddipl1 = 2) is associated with a `r round(coef_matrix_rounded["(Exp(Coef)-1)100", "ddipl12"],2)`\% increase in wage. 
+\item The R-squared (including the adjusted one) appears to be quite low with only `r round(summary(model)$r.squared * 100, 2)`\% of the variations in monthly log wages explained by this model. This signifies that the model might potentially benefit from the inclusion of additional variables with a good explanatory power. 
+\end{itemize}
+
+\textbf{On the age and age-squared variables}
+\begin{itemize}
+\item We notice that age squared is negatively related to wages (`r round(coef_matrix_rounded["(Exp(Coef)-1)100", "agd_sqd"], 3)`\% decrease) when age is positively related (`r round(coef_matrix_rounded["(Exp(Coef)-1)100", "agd"], 3)` \% increase). Since we include a squared term we are in fact modeling a quadratic relationship and this indicates that, while wage increases with age, it does so at a decreasing rate over time. In fact, it eventually reaches a maximum before declining. 
+\item This makes sense since, passed a certain age, salaries can't be expected to increase further. 
+\end{itemize}
+
+# Question 6 
+```{r, include = TRUE}
+SSR <- sum(residuals(model)^2)
+N <- length(employment_data$log_salfr)
+K <- length(coef(model))
+
+cat("Sum of squared residuals : ", sprintf("%.2f", SSR))
+cat("Number of independent variables (+intercept) : ", K)
+cat("Number of observations : ", N)
+```
+
+# Question 7 
+```{r, include = TRUE}
+restricted_model <- lm(log_salfr ~ agd + agd_sqd, data = employment_data)
+anova_results <- anova(restricted_model, model)
+kable(anova_results, digits = 3, caption = "ANOVA Comparison Results") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE)
+```
+After computing the F test statistic and the corresponding p-value, we observe
+the latter is low enough to reject the null hypothesis ($\approx$ `r round(anova_results[2, "Pr(>F)"],2)`). This supports the fact that the level of education is indeed significantly related to wages. 
+
+# Question 8 
+```{r, include = TRUE}
+## Method 1 : using the "car" package
+lh_test <- linearHypothesis(model, "ddipl12 = ddipl13")
+
+stats_df <- data.frame(
+  Statistic = c("F statistic", "p-value"),
+  Value = c(
+    round(lh_test$F[2], 4),
+    format.pval(lh_test$`Pr(>F)`[2], digits = 4)
+  )
+)
+
+kable(stats_df, align = c("l", "r"), 
+      caption = "Test: ddipl12 = ddipl13")
+
+## Method 2 : manual computation 
+beta <- coef(model)
+vcov_mat <- vcov(model)
+
+# Estimate
+estimate <- beta["ddipl12"] - beta["ddipl13"]
+
+# Standard error of the parameter estimated :
+SE <- sqrt(vcov_mat["ddipl12", "ddipl12"] + vcov_mat["ddipl13", "ddipl13"] -
+                  2 * vcov_mat["ddipl12", "ddipl13"])
+
+# T-statistic
+t_stat <- estimate / SE
+
+# Degrees of freedom
+df <- df.residual(model)
+
+# Calculate the two-sided p-value
+p_value <- 2 * pt(-abs(t_stat), df)
+
+results_df <- data.frame(
+  Parameter = c("Estimate", "Standard Error", "t-statistic", "p-value"),
+  Value = c(estimate, SE, t_stat, p_value)
+)
+
+# Print a nicely formatted table
+kable(results_df, digits = 4, caption = "Parameter Estimates") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+Independently of the method used, we find the p-value to be low enough (<0.05) for the null hypothesis to be safely rejected at the 5% significance level. This implies that having only the BEPC or having the CAP, BEP,.. does not have the same impact on the dependent variable. This makes sense as we would expect a higher level of education to have a more significant impact on the independent variable.
+
+# Question 9 
+```{r, include = TRUE}
+# Reduces the dimension of the Education variable by merging level 2 and 3
+employment_data_reduced <- employment_data %>%
+  mutate(
+    ddipl1_reduced = case_when(
+      ddipl1 %in% c(2, 3) ~ "2_3",
+      ddipl1 %in% c(4, 5, 6) ~ as.character(ddipl1),
+      TRUE ~ "1"  # Reference level
+    ),
+    ddipl1_reduced = factor(ddipl1_reduced),
+    agd_sqd = agd^2
+  )
+
+# Run the model with the reduced education variable
+model2 <- lm(log_salfr~ s + agd + agd_sqd + ddipl1_reduced, 
+                      data = employment_data_reduced)
+
+stargazer(model2, type = "text", title = "Regression Results", 
+          dep.var.labels = "Log(salfr)", 
+          omit.stat = c("f", "ser"))
+```
+We notice grouping both categories does not change significantly the explanatory power of the model. Indeed the adjusted R-squared remains the same as the one in the model with full specifications for education. 
+This seems counterintuitive given that, in question 8, we rejected the hypothesis that the effect of (ddiple1==2) and (ddipl1==3) is the same. 
+
+# Question 10 
+```{r, include = TRUE}
+model2_restricted <- lm(log_salfr ~ s + agd + agd_sqd, data = employment_data)
+
+stargazer(model2_restricted, type = "text", title = "Regression Results", 
+          dep.var.labels = "Log(salfr)", 
+          omit.stat = c("f", "ser"))
+```
+We observe that all independent variables are significant at the 1% significance leveL. 
+
+# Question 11
+```{r, include = TRUE}
+SSR2 <- sum(residuals(model2_restricted)^2)
+cat("Sum of squared residuals : ", sprintf("%.2f", SSR2))
+```
+
+# Question 12 
+To compute the F-statistic I use the new restricted model and the model we established in Question 9 (with the new education variable). 
+```{r, include = TRUE}
+# method 1 : retrieves the F-statistic from the ANOVA table
+test_result <- anova(model2_restricted, model2)
+F_statistic <- test_result$F[2]
+
+# method 2 : manually computes the F-statistic 
+F_statistic_manual <- ((SSR2-SSR)/4)/(SSR/(N-5))
+
+cat("F-statistic for the education test (manual) :", sprintf("%.2f", F_statistic))
+cat("F-statistic for the education test (manual) :", sprintf("%.2f", F_statistic_manual))
+```
+We observe there is a slight difference between the F-statistic obtained using the "anova" function and the one obtained through manual computations. 
+Nonetheless, this does not impact the result of question 13 as both are widely superior to the critical value.
+
+# Question 13 
+```{r, include = TRUE}
+df1 <- test_result$Df[2]
+df2 <- length(employment_data$log_salfr)
+critical_value <- qf(0.95, df1, df2)
+cat("95th percentile of the Fisher Distribution :", sprintf("%.2f", critical_value))
+```
+The critical value (`r round(critical_value,2)`) is vastly under the value of the Fisher statistic we computed earlier (`r round(F_statistic,2)`), thus we can safely reject the null hypothesis.
+This is in accordance with what we found earlier and seems to indicate that adding education greatly improves the model. 
+
+# Question 14 : 
+
+## a) 
+\textbf{Set-up of the test : }
+\begin{equation}
+\begin{aligned}
+  H_0 : \beta_5 + \beta_{5}^{Women} - \beta_3 = 0 \\
+  H_1 : \beta_5 + \beta_{5}^{Women} - \beta_3 \neq 0 \\
+\end{aligned}
+\end{equation}
+We note the t-statistic W, it is equal to the following : 
+\begin{equation}
+  W = \frac{\hat{T}}{SE} = \frac{\hat{\beta}_5 + \hat{\beta}_{5}^{Women} - \hat{\beta}_3}{SE}
+\end{equation}
+```{r, include = TRUE}
+model_interact <- lm(log_salfr ~ agd + agd_sqd + ddipl1 + s + ddipl1:s, data = employment_data)
+
+# computes the estimate for \hat{T}
+beta <- coef(model_interact)
+estimate <- beta["ddipl15:s2"] + beta["ddipl15"] - beta["ddipl13"]
+cat("we get the following estimate for the parameter : ", estimate, "\n")
+```
+
+## b) 
+Let us now find the standard error of the parameter we are trying to estimate ($\hat{T}$). 
+We set : $\theta = (\beta_5, \beta_{5}^{Women}, \beta_3)$ and $f(\beta_) = \beta_5 + \beta_{5,Women} - \beta_3$ \\
+According to the delta method, we have : 
+\begin{equation}
+  \sqrt(n)(f(\hat{\theta})-f(\theta)) \xrightarrow{d} N(0,\sigma) \text{ with $\Sigma$ the covariance matrix for $\theta$}
+\end{equation}
+So we can write : 
+\begin{equation}
+  Var(\hat{T}) = Var(g(\theta))' \approx \nabla g(\theta)^TVar(\theta)\nabla g(\theta) \text{with $Var(g(\theta)) = \begin{pmatrix} \frac{\delta g}{\delta\beta_5}=1 \\ \frac{\delta g}{\delta\beta_5}=1 \end{pmatrix}$}
+\end{equation}
+If we rewrite it this gives us : 
+\begin{equation}
+  Var(\hat{T}) = \begin{pmatrix} 1 & 1 & -1 \end{pmatrix}\begin{pmatrix} \operatorname{Var}(\beta_5) & \operatorname{Cov}(\beta_5, \beta_5^{\text{femme}}) & \operatorname{Cov}(\beta_5, \beta_3) \\\operatorname{Cov}(\beta_5^{\text{femme}}, \beta_5) & \operatorname{Var}(\beta_5^{\text{femme}}) & \operatorname{Cov}(\beta_5^{\text{femme}}, \beta_3) \\\operatorname{Cov}(\beta_3, \beta_5) & \operatorname{Cov}(\beta_3, \beta_5^{\text{femme}}) & \operatorname{Var}(\beta_3)\end{pmatrix}\begin{pmatrix} 1 \\ 1 \\ -1 \end{pmatrix}
+\end{equation}
+Finally we know that : $SE =\sqrt{Var(\hat{T})}$ 
+
+Now that we have the formula for it, we can compute the standard error using R : 
+```{r, include = TRUE}
+# Get the variance-covariance matrix 
+vcov_matrix <- vcov(model_interact)
+var_cov_subset <- vcov_matrix[c("ddipl15", "ddipl15:s2", "ddipl13"),
+                              c("ddipl15", "ddipl15:s2", "ddipl13")]
+
+# Define the gradient vector
+gradient <- c(1, 1, -1)
+
+# Computes Var(\hat{})
+var_delta <- t(gradient) %*% var_cov_subset %*% gradient
+
+# Compute the standard error
+se_delta <- sqrt(var_delta)
+cat("We find the following standard error :", sprintf("%.2f", se_delta),"\n")
+```
+
+## c)
+Finally we compute the test statistic :
+```{r, include = TRUE}
+# Computes the test statistic
+test_statistic <- estimate/se_delta
+
+# Computes the p-value for the test 
+df_resid <- df.residual(model_interact)
+p_value <- 2 * (1 - pt(abs(test_statistic), df = df_resid))
+
+# Compute the two-sided p-value
+cat("test statistic : ", test_statistic, "\n")
+cat("p-value:", sprintf("%.2f", p_value), "\n")
+```
+The resulting t-statistic is $t =$ `r round(test_statistic, 2)` and the accompanying p-value  p is $\approx0$.  Given this extremely low p-value, we reject the null hypothesis that the effects of being a woman . Thus, at the 1% level of significance,  we observe a significant difference between the effect on wage associated with having a CAP (or equivalent) while being a woman, and that associated with having the Baccalauréat while being a man. 
+

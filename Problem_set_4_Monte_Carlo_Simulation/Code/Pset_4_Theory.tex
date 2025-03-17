@@ -57,7 +57,7 @@ We know that :
 Now that we have (7), we can take the sum over all i and divide by n:
 \begin{equation}
 \begin{aligned}
-    \frac{1}{n}\sum_{j=1}^k\hat{u}_i &= (\beta_0-\hat{\beta}_0) + \sum_{j=1}^k(\beta_j-\hat{\beta}_j) [\frac{1}{n}\sum_{i=1}^nx_{ij}] + \bar{u} \\
+    \frac{1}{n}\sum_{i=1}^k\hat{u}_i &= (\beta_0-\hat{\beta}_0) + \sum_{j=1}^k(\beta_j-\hat{\beta}_j) [\frac{1}{n}\sum_{i=1}^nx_{ij}] + \bar{u} \\
     \underbrace{\bar{\hat{u}}}_{=0} &= (\beta_0-\hat{\beta}_0) + \sum_{j=1}^k(\beta_j-\hat{\beta}_j)\bar{x_j}+ \bar{u} \\
         \hat{u}_i-0&= \hat{u}_i - (\beta_0-\hat{\beta}_0) - \sum_{j=1}^k(\beta_j-\hat{\beta}_j)\bar{x_j}- \bar{u} \\
         \hat{u}_i &= (\beta_0 - \hat{\beta}_0)+\sum_{j=1}^k(\beta_j-\hat{\beta}_j)x_{ij} + u_i- (\beta_0-\hat{\beta}_0) - \sum_{j=1}^k(\beta_j-\hat{\beta}_j)\bar{x_j}- \bar{u}\\
