@@ -36,6 +36,7 @@ if (!require(knitr)) install.packages("knitr")
 if (!require(stargazer)) install.packages("stargazer")
 if (!require(KableExtra)) install.packages("KableExtra")
 if (!require(car)) install.packages("car")
+if (!require(car)) install.packages("cowplot")
 library(kableExtra)
 library(haven)
 library(tidyverse)
@@ -47,6 +48,7 @@ library(skimr)
 library(knitr)
 library(stargazer)
 library(car)
+library(cowplot)
 ```
 
 # Question 1 
@@ -59,11 +61,45 @@ data <- data.frame(x1 = x1, u = u)
 
 par(mfrow = c(1, 2))  
 
-hist(data$x1, main = 'Histogram of x1 \
- Uniform(0,1)', xlab = 'x1', col = 'skyblue', border = 'black')
+# histogram for x1
+p1 <- ggplot(data, aes(x = x1)) +
+  geom_histogram(binwidth = 0.05, fill = 'skyblue', color = 'black', alpha = 0.8) +
+  geom_vline(aes(xintercept = mean(x1), color = 'Mean'), linetype = 'dashed', linewidth  = 1) +
+  geom_vline(aes(xintercept = median(x1), color = 'Median'), linetype = 'dotted', linewidth = 1) +
+  scale_color_manual(name = 'Legend :', values = c('Mean' = 'red', 'Median' = 'blue')) +
+  labs(title = 'Histogram of x1', x = 'x1', y = 'Count') +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = 'bold', hjust = 0, size = 10),
+    axis.title = element_text(size = 10),
+    legend.position.inside = c(0.95, 0.95),
+    legend.justification = c('right', 'top'),
+    legend.background = element_rect(color = 'black', fill = 'white', linewidth = 0.3),
+    legend.margin = margin(2, 2, 2, 2),
+    legend.box.margin = margin(0, 0, 0, 0),
+    legend.title = element_text(size = 8, face = 'bold', margin = margin(b = 0))
+  )
 
-hist(data$u, main = 'Histogram of u \
- (u+1 ~ Chi-square(1))', xlab = 'u', col = 'salmon', border = 'black')
+# histogram for u
+p2 <- ggplot(data, aes(x = u)) +
+  geom_histogram(binwidth = 0.5, fill = 'salmon', color = 'black', alpha = 0.8) +
+  geom_vline(aes(xintercept = mean(u), color = 'Mean'), linetype = 'dashed', linewidth = 1) +
+  geom_vline(aes(xintercept = median(u), color = 'Median'), linetype = 'dotted', linewidth = 1) +
+  scale_color_manual(name = 'Legend :', values = c('Mean' = 'red', 'Median' = 'blue')) +
+  labs(title = 'Histogram of u', x = 'u', y = 'Count') +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = 'bold', hjust = 0, size = 10),
+    axis.title = element_text(size = 10),
+    legend.position.inside = c(0.95, 0.95),
+    legend.justification = c('right', 'top'),
+    legend.background = element_rect(color = 'black', fill = 'white', linewidth = 0.3),
+    legend.margin = margin(2, 2, 2, 2),
+    legend.box.margin = margin(0, 0, 0, 0),
+    legend.title = element_text(size = 8, face = 'bold', margin = margin(b = 0))
+  )
+
+plot_grid(p1, p2, ncol = 2)
 ```
 
 # Question 2
@@ -100,11 +136,31 @@ for (i in 1:10000) {
 ## 2.c)
 
 ```{r, include= TRUE}
-par(mfrow = c(1, 1))  
+par(mfrow = c(1, 1))
 
-hist_simulation <- results_df %>% 
-  pull(sample_mean) %>% 
-  hist(main = 'Histogram of means of u', xlab = 'u', col = 'red', border = 'black')
+mean_sample_means <- mean(results_df$sample_mean)
+median_sample_means <- median(results_df$sample_mean)
+
+# plots the histogram
+p3 <- ggplot(results_df, aes(x = sample_mean)) +
+  geom_histogram(binwidth = 0.1, fill = 'lightblue', color = 'black', alpha = 0.8) +
+  geom_vline(aes(xintercept = mean_sample_means, color = 'Mean'), linetype = 'dashed', linewidth = 1) +
+  geom_vline(aes(xintercept = median_sample_means, color = 'Median'), linetype = 'dotted', linewidth = 1) +
+  scale_color_manual(name = 'Legend', values = c('Mean' = 'red', 'Median' = 'blue')) +
+  labs(title = 'Histogram of means of u', x = 'u', y = 'Count') +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = 'bold', hjust = 0, size = 10),
+    axis.title = element_text(size = 10),
+    legend.position.inside = c(0.95, 0.95),
+    legend.justification = c('right', 'top'),
+    legend.background = element_rect(color = 'black', fill = 'white', linewidth = 0.3),
+    legend.margin = margin(2, 2, 2, 2),
+    legend.box.margin = margin(0, 0, 0, 0),
+    legend.title = element_text(size = 8, face = 'bold', margin = margin(b = 0))
+  )
+
+print(p3)
 ```
 
 # Question 3 
@@ -155,8 +211,10 @@ modified_sd <- sample_mean_stats %>%
 cat("Transformed standard deviation (100) : ", modified_sd$m100)
 cat("Transformed standard deviation (1000) : ", modified_sd$m1000)
 ```
-We clearly see that the standard deviation goes closer to 0 as we increase the denominator (which makes sense).By applying these transformations we get the predicted standard error of the mean of u for sample sizes 100 or 1000 respectively. \\
-We notice that these predicted values are very close from those we computed in 3 for samples of size 100 and 10 000 respectively.\\
+We clearly see that the standard deviation goes closer to 0 as we increase the denominator (which makes sense).By applying these transformations we get the predicted standard error of the mean of u for sample sizes 100 or 1000 respectively. 
+
+We notice that these predicted values are very close from those we computed in 3 for samples of size 100 and 10 000 respectively.
+
 We solve for N using the following equation : $sd_n = sd_{10} * \sqrt{\frac{10}{N}}$ with $sd_{10} \approx 0.44$ and $sd_n = 0.001$.
 \begin{itemize}
 \item This gives us $N \approx 2.10^6$.
@@ -185,6 +243,7 @@ for (N in c(10, 100, 1000)) {
        breaks = 30,  
        freq = FALSE)   
   
+  grid(nx = NULL, ny = NULL, col = "gray", lty = "dotted", lwd = 1)  
   x_range <- par("usr")[1:2]  
   
   # Overlay normal curve with the calculated mean and sd  
@@ -268,8 +327,8 @@ for(cl in cols){
        freq = FALSE)  
   mean_p <- mean(vec, na.rm = TRUE)  
   sd_p <- sd(vec, na.rm = TRUE)  
-  # Use the range of the data with some padding  
-  x_range <- range(vec, na.rm = TRUE) + c(-0.1, 0.1) * sd_p  
+  x_range <- range(vec, na.rm = TRUE) + c(-0.1, 0.1) * sd_p 
+   grid(nx = NULL, ny = NULL, col = "gray", lty = "dotted", lwd = 1)  
   curve(dnorm(x, mean = mean_p, sd = sd_p),   
         add = TRUE,   
         col = "red",   
@@ -302,13 +361,16 @@ for(col in cols){
   sd_p   <- sd(vec)  
   
   # Define x-range based on data (with a little margin)  
-  x_range <- range(vec, na.rm = TRUE) + c(-1, 1)*sd_p*0.1  
+  x_range <- range(vec, na.rm = TRUE) + c(-1, 1)*sd_p*0.1 
+  grid(nx = NULL, ny = NULL, col = "gray", lty = "dotted", lwd = 1)  
   curve(dnorm(x, mean = mean_p, sd = sd_p),   
         add = TRUE, col = "red", lwd = 2,   
         from = x_range[1], to = x_range[2])  
 }  
 ```
-The more we increase teh sample size (N), the more the distribution of the sample mean tends towards a normal distribution which is conform to the central limit theorem. Thus the coefficients converge to the population value. \\
+
+The more we increase the sample size (N), the more the distribution of the sample mean tends towards a normal distribution which is conform to the central limit theorem. Thus the coefficients converge to the population value. 
+
 The mean and standard deviation of the standard error of coefficients tend towards zero as the sample size (N) increases, thus we can safely assert that this estimator is consistent (its variance is asymptotically null). 
 
 # Question 8 
@@ -350,14 +412,27 @@ x_range[1] <- max(0, x_range[1] - 0.1 * sd_p_10)
 x_range[2] <- x_range[2] + 0.1 * sd_p_10  
 
 # Plot histogram  
-par(mfrow = c(1, 1))  
-hist(F_stat_vec_10,   
-     main = "F Statistic Distribution (N = 10)",   
-     xlab = "F Statistic",   
-     col = "skyblue",   
-     breaks = 30,   
-     freq = FALSE,   
-     xlim = x_range)  
+ df10 <- data.frame(F_stat = F_stat_vec_10)  
+   
+ p10 <- ggplot(df10, aes(x = F_stat)) +  
+   geom_histogram(aes(y = ..density..), bins = 60, fill = "skyblue", color = "black", alpha = 0.8) +  
+   geom_vline(aes(xintercept = mean(F_stat), color = "Mean"), linetype = "dashed", linewidth = 1) +  
+   geom_vline(aes(xintercept = median(F_stat), color = "Median"), linetype = "dotted", linewidth = 1) +  
+   scale_color_manual(name = "Legend", values = c("Mean" = "red", "Median" = "blue")) +  
+   labs(title = "F Statistic Distribution (N = 10)", x = "F Statistic", y = "Density") +  
+   coord_cartesian(xlim = x_range) +  
+   theme_minimal() +  
+   theme(  
+     plot.title = element_text(face = "bold", hjust = 0, size = 10),  
+     axis.title = element_text(size = 10),  
+     legend.position.inside = c(0.95, 0.95),  
+     legend.justification = c("right", "top"),  
+     legend.background = element_rect(color = "black", fill = "white", linewidth = 0.3),  
+     legend.margin = margin(2, 2, 2, 2),  
+     legend.box.margin = margin(0, 0, 0, 0),  
+     legend.title = element_text(size = 8, face = "bold", margin = margin(b = 0))  
+   )  
+ print(p10) 
 ```
 
 ## Simulations (N = 1000)
@@ -370,13 +445,27 @@ hist(F_stat_vec_10,
  x_range[2] <- x_range[2] + 0.1 * sd_p_1000  
    
 # Plot histogram  
- hist(F_stat_vec_1000,     
-      main = "F Statistic Distribution (N = 1000)",     
-      xlab = "F Statistic",     
-      col = "skyblue",     
-      breaks = 30,     
-      freq = FALSE,     
-      xlim = x_range)  
+ df1000 <- data.frame(F_stat = F_stat_vec_1000)  
+   
+ p1000 <- ggplot(df1000, aes(x = F_stat)) +  
+   geom_histogram(aes(y = ..density..), bins = 60, fill = "skyblue", color = "black", alpha = 0.8) +  
+   geom_vline(aes(xintercept = mean(F_stat), color = "Mean"), linetype = "dashed", linewidth = 1) +  
+   geom_vline(aes(xintercept = median(F_stat), color = "Median"), linetype = "dotted", linewidth = 1) +  
+   scale_color_manual(name = "Legend", values = c("Mean" = "red", "Median" = "blue")) +  
+   labs(title = "F Statistic Distribution (N = 1000)", x = "F Statistic", y = "Density") +  
+   coord_cartesian(xlim = x_range) +  
+   theme_minimal() +  
+   theme(  
+     plot.title = element_text(face = "bold", hjust = 0, size = 10),  
+     axis.title = element_text(size = 10),  
+     legend.position.inside = c(0.95, 0.95),  
+     legend.justification = c("right", "top"),  
+     legend.background = element_rect(color = "black", fill = "white", linewidth = 0.3),  
+     legend.margin = margin(2, 2, 2, 2),  
+     legend.box.margin = margin(0, 0, 0, 0),  
+     legend.title = element_text(size = 8, face = "bold", margin = margin(b = 0))  
+   )  
+ print(p1000)   
 ```
 
 # Question 9 
@@ -421,16 +510,19 @@ kable(results_df, format = "latex",
 ) %>%  
   kable_styling(bootstrap_options = c("striped", "hold_position"),   
                 full_width = FALSE,   
-                position = "center")  
+                position = "center",  
+                latex_options = "hold_position")  
 ```
 
 
 ## 9.c)
-If the distribution of the error terms had been normal, we would expect that at the 95% (99%) we would reject $H_0$ for 5%(1%) of the samples tested.\\
-We notice that, based on our simulation, the observed rejection rates were much higher when the sample size is 10 (around 11% of rejection at the 95% confidence level and around 5% for the 99% confidence level)\\
+If the distribution of the error terms had been normal, we would expect that at the 95% (99%) confidence level we would reject $H_0$ for 5%(1%) of the samples tested. 
+
+We notice that, based on our simulation, the observed rejection rates were much higher when the sample size is 10 (around 11% of rejection at the 95% confidence level and around 5% for the 99% confidence level) 
+
 When we look at samples of larger sizes (1000), however, we notice observed results are much closer to the expected proportions ! 
 \begin{itemize}
-\item This is a direct implication of the central limit theorem : a larger sample size improves the approximation to normality. 
+\item This is a direct illustration of the central limit theorem : a larger sample size improves the approximation to normality. 
 \end{itemize}
 
 
